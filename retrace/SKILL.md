@@ -1,7 +1,7 @@
 ---
 name: retrace
 description: Teach a codebase, a feature, another repo or a library by having the learner retrace how it was designed. Pose the real-world problem it exists to solve, let them propose solutions, push back with concrete consequences, and converge step by step on the real design, so by the end they've rebuilt it themselves and can defend every decision. Progress is saved in the repo, so sessions resume. Run with /retrace [feature | path | repo | library].
-argument-hint: "[feature | path | owner/repo | URL | library]"
+argument-hint: "[target] | faster | slower | skip [part] | hint | recap | stop"
 disable-model-invocation: true
 ---
 
@@ -17,7 +17,9 @@ The shape of a session:
 4. The flaw in their solution becomes the next problem.
 5. Repeat until they've rebuilt the design and can say why each piece is there.
 
-Target: `$ARGUMENTS`
+Arguments: `$ARGUMENTS`
+
+If the arguments are a control (see Controls), apply it to the session in progress and carry on. Otherwise they name the target:
 
 - **Empty, a local path or a feature name:** the current repo, that path, or that part of the repo. Treat it as the learner's own project unless they say otherwise.
 - **`owner/repo`, a git URL or a package name:** someone else's project. For a package, find its source repo first. Run `git clone --filter=blob:none <url> ~/.cache/retrace/<name>`, or `git pull` there if the folder already exists, so later sessions find it. The filter keeps the full commit history without downloading every old file.
@@ -68,7 +70,7 @@ Write `map.md` like this:
 
 ```markdown
 # Map
-target: <name> | commit: <short sha> | date: <YYYY-MM-DD>
+target: <name> | commit: <short sha> | date: <YYYY-MM-DD> | pace: normal
 root problem: <why it exists, in the learner's words if it's their project>
 
 ## P1. <the problem, without naming the solution>
@@ -89,7 +91,7 @@ root problem: <why it exists, in the learner's words if it's their project>
 - what you're retracing;
 - how this works: "I'll give you problems, you propose solutions, I'll push back";
 - roughly how many problems there are;
-- the controls they can type at any time: `hint`, `skip`, `show me`, `why`, `recap`, `stop`.
+- the controls, which they can type on their own or as `/retrace <control>`: `hint`, `show me`, `skip`, `faster`, `slower`, `recap`, `stop`.
 
 If their background in the domain is unclear, ask about it once, in plain words. Otherwise infer it from their answers and adjust.
 
@@ -104,14 +106,14 @@ Pose one problem per message, and keep it short.
 
 - **Lead with the real world.** Use a person, a situation and what it costs them, with numbers. Not "design a link checker", but this: "Maya maintains the docs for an open-source library, about 2,000 pages edited by 40 contributors. Readers keep hitting dead links, and she only finds out from angry GitHub issues, weeks later."
 - **Then the technical implication.** State as facts what makes this hard: scale, latency, failure, cost, abuse, trust.
-- **Give the facts they'll need inside the setup.** Something like "reading a 4 KB page from an SSD takes about 100 µs; from memory, about 100 ns" goes in the problem itself, not in a lecture up front. Never ask the learner to reason about something they haven't been taught yet. Teach the fundamental, then let them apply it.
+- **Give only the facts they couldn't work out themselves,** and put them inside the setup. Something like "reading a 4 KB page from an SSD takes about 100 µs; from memory, about 100 ns" goes in the problem itself, not in a lecture up front. Never ask the learner to reason about something they haven't been taught yet. Teach the fundamental, then let them apply it. If they could reason something out, ask instead of telling. A fact must never include the conclusion it leads to.
 - **End with one or two concrete questions,** and stop there. A short hint is fine: "think about how much of the file that query actually needs."
 - **Make the numbers realistic, so the naive answer actually fails.** If your setup quietly makes a problem disappear, the learner will notice, and they'll be right to call it out.
 
-When they answer:
+When they answer, show what breaks and stop there. Never follow a flaw with its fix ("so resolve every href first"); ask how they'd change their design. Raise one flaw per round, unless the pace is fast.
 
 - **Right:** say so, and say why it works in a line or two. Name the concept now that they've derived it ("these fixed 4 KB chunks are called pages"), then move to what it breaks or enables next.
-- **Partly right:** confirm the key move, then show the concrete case where it breaks ("what if those three reads come from three separate queries, seconds apart?").
+- **Partly right:** confirm the key move, then show the concrete case where it breaks ("what if those three reads come from three separate queries, seconds apart?") and ask how they'd handle it.
 - **Wrong or vague:** don't just say "wrong." Walk one concrete case through their design until it visibly fails, then ask a narrower question. Don't accept buzzwords: "use a queue" gets "which queue, what goes in it, who reads it, and what happens when the reader crashes halfway?"
 - **Sound but different from the original:** say it works. Compare the tradeoffs honestly, including the original's reasons, and let them choose. Default to continuing on the original's path, because the goal is to end up understanding this project, but say what changes later on if they keep their version. If theirs is better, say so and log it.
 - **They challenge your setup:** take it seriously. If they're right, say so plainly and lay out the real tradeoff.
@@ -127,6 +129,24 @@ If they're stuck or ask for a hint, escalate one step at a time:
 Never jump to the reveal on your own.
 
 Once a decision is settled, show where the real project made it: `file:line` and the few lines that matter. The derivation then lands on the real code, and they can see their idea in production form. Its consequence becomes the next problem.
+
+## Controls
+
+The learner can type these on their own or as `/retrace <control>`.
+
+- `hint`: the next step of the hint ladder.
+- `show me`: the reveal, step 5 of the hint ladder.
+- `skip`: skip the current problem. Give the real decision in two or three lines, so the next problem makes sense, and log it as skipped.
+- `skip <part>`, for example `skip rate limiting`: drop that part of the map instead.
+- `faster` or `slower`: change the pace by one step, and save it in the map header so it carries over.
+- `recap`: run a recap checkpoint now.
+- `stop`: end the session. Everything is already saved.
+
+**Pace** sets how many problems the project gets and how many questions each one takes:
+
+- **Fast:** core problems only, with closely related ones merged, and one question per problem. Once the key idea lands, mention smaller flaws in a line and move on.
+- **Normal,** the default: the core problems. Each flaw that matters gets its own round.
+- **Slow:** every problem, including the deeper ones. Each flaw is its own round, followed by a twist once a decision is settled, and a checkpoint every 3 problems.
 
 ## Checkpoints
 

@@ -11,8 +11,11 @@ Learn how something was built by building it again yourself. Instead of reading 
 /retrace
 /retrace the crawl queue
 /retrace tanstack/query
+/retrace faster
+/retrace slower
+/retrace skip
 ```
 
-Progress saves to `.retrace/` in the repo (git-excluded), so `/retrace` picks up where you left off.
+Progress saves to `.retrace/` in the repo (git-ignored), so `/retrace` picks up where you left off.
 
 Requires: `git`
