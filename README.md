@@ -3,6 +3,7 @@
 My agent skills
 
 - [audit](audit)
+- [retrace](retrace)
 
 ## Install
 
